@@ -1,20 +1,27 @@
 const express = require('express');
 const cors = require('cors');
-const { Server } = require('socket.io');
+// const { Server } = require('socket.io');
+const socketio = require('socket.io');
 const app = express();
 var roomUser=[];
-app.use(cors());
+const http = require('http');
 const {addUser, removeUser, getUser, getUsersInRoom, addWorth, reset} = require('./users.js');
-const server = app.listen(3001,()=>
-{
-    console.log("server odindu");
-})
-const io = new Server(server,{
-    cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET","POST"],
-    },
-});
+const router = require('./router.js');
+// const server = app.listen(3001,()=>
+// {
+//     console.log("server odindu");
+// })
+// const io = new Server(server,{
+//     cors: {
+//         origin: "http://localhost:3000",
+//         methods: ["GET","POST"],
+//     },
+// });
+const server = http.createServer(app);
+app.use(cors());
+const io = socketio(server);
+app.use(router);
+
 io.on("connection",function(socket){
     socket.on('join', ({ name, room },callback) =>{
     const {error,user} = addUser({ id: socket.id, name, room });
@@ -54,7 +61,7 @@ io.on("connection",function(socket){
         }
     })
     socket.on("preach",function(data){
-        if(data =='reset'){
+        if(data ==='reset'){
             const user = getUser(socket.id);
             reset(user.room)
             roomUser = getUsersInRoom(user.room);
